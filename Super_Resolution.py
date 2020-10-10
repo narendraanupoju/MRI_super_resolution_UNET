@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
-
-
 #importing required libraries
 import os
 #import pydicom
@@ -23,10 +20,6 @@ import torch
 import matplotlib.pyplot as plt
 from nilearn.plotting import show
 
-
-# In[3]:
-
-
 #read required files and check for their shape
 path = glob.glob('selected/*')
 file_names = []
@@ -43,10 +36,6 @@ for images in path:
     header = data_load.header
     file_header.append(header)
 
-
-# In[4]:
-
-
 #get voxel data and pixel data
 vox_data = []
 data_shapes = []
@@ -59,10 +48,6 @@ for shapes in file_data:
 print(vox_data[1])
 print(len(data_shapes),len(vox_data))
 
-
-# In[5]:
-
-
 #processing for isotropic voxels
 target_resolution = []
 for (x_p,y_p,z_p),(x_v,y_v,z_v) in zip(data_shapes,vox_data):
@@ -70,10 +55,6 @@ for (x_p,y_p,z_p),(x_v,y_v,z_v) in zip(data_shapes,vox_data):
     required_pixel_resolution = (int(required_pixel_resolution[0]),int(required_pixel_resolution[1]),int(required_pixel_resolution[2]))
     print(required_pixel_resolution)
     target_resolution.append(required_pixel_resolution) 
-
-
-# In[6]:
-
 
 # making data to isotropic voxels
 required_resolution = []
@@ -88,9 +69,6 @@ for resolution,file,y in zip(target_resolution,file_names,file_data):
 print(required_resolution[1].shape)
 
 
-# In[7]:
-
-
 #plotting original data and resampled data
 from nilearn import plotting
 
@@ -100,18 +78,10 @@ plotting.plot_stat_map(required_resolution[5],cut_coords=(0, 14, -7),
                        title="Resampled resolution")
 plotting.show()
 
-
-# In[8]:
-
-
 # checking shapes of resampled data
 required_new_resolution_array_data= np.asarray(required_new_resolution_data)
 print(required_new_resolution_array_data.shape)
 print(required_new_resolution_array_data[1].shape)
-
-
-# In[9]:
-
 
 #downsampling resampled data by removing alternative slices
 gts = []
@@ -130,10 +100,6 @@ print(gts[1].shape)
 print(type(gts[1]))
 print(required_resolution[1].shape)
 
-
-# In[10]:
-
-
 #converting 3d to 5d
 print(gts[1].shape)
 required_arr_4d = []
@@ -149,9 +115,6 @@ print(required_arr_4d[1].shape)
 print(required_arr_5d[1].shape)
 
 
-# In[11]:
-
-
 #getting torch tensors from numpy array
 tor_5d_arr = []
 for x in required_arr_5d:
@@ -159,59 +122,32 @@ for x in required_arr_5d:
     tor_5d_arr.append(tor_data)
 print(tor_5d_arr[1].shape)  
 
-
-# In[12]:
-
-
 #Interpolation of downsampled data for adding noise
 needed = tor_5d_arr[1]
 tor_inter = torch.nn.functional.interpolate(needed, size=(192,192,130), scale_factor=None, mode='trilinear', align_corners=None)
 print(tor_inter.shape)
 
-
-# In[13]:
-
-
 #Getting numpy array from pytorch tensors 
 pt2np = tor_inter.numpy()
 pt2np.shape
 
-
-# In[14]:
-
-
 #Verifying noise from interpolated image
 print(pt2np.mean())
 print(required_new_resolution_array_data[1].mean())
-
-
-# In[15]:
-
 
 #Squeezing 5d to 3d for plotting
 sqez1 = np.squeeze(pt2np, axis=0)
 sqez2 = np.squeeze(sqez1,axis = 0)
 plt.imshow(sqez2[:,:,39], cmap='gray')
 
-
-# In[16]:
-
-
 #checking for the noise in the image slice with isotropic file
 fig = plt.figure(figsize = (18, 8))
 ax1 = fig.add_subplot(1, 2, 1)
 ax1.imshow(sqez2[:,:,39], cmap= "gray")
 ax2 = fig.add_subplot(1, 2, 2)
-ax2.imshow(required_new_resolution_array_data[1][:,:,39],cmap= "gray")
-
-
-# In[17]:
-
+ax2.imshow(required_new_resolution_array_data[1][:,:,39],cmap= "gray"
 
 req_swap = np.moveaxis(required_new_resolution_array_data[1],2,0)
-
-
-# In[18]:
 
 
 #3d volume verification of isotropic volume and interpolated volume
@@ -221,17 +157,10 @@ plt_sqeez = sitk.GetImageFromArray(swapped)
 req_plt_sqeez = sitk.GetImageFromArray(req_swap)
 sitk.Show(plt_sqeez)
 sitk.Show(req_plt_sqeez)
-
-
-# In[19]:
-
+           
 
 import torch
 import torch.nn as nn
-
-
-# In[20]:
-
 
 def create_conv_bn_relu(in_channels, out_channels, kernel_size=3, padding=1):
     return nn.Sequential(
@@ -240,19 +169,11 @@ def create_conv_bn_relu(in_channels, out_channels, kernel_size=3, padding=1):
         nn.ReLU(inplace=True),
     )
 
-
-# In[21]:
-
-
 def create_double_conv(in_channels, mid_channels, out_channels, kernel_size=3, padding=1):
     return nn.Sequential(
         create_conv_bn_relu(in_channels, mid_channels, kernel_size, padding),
         create_conv_bn_relu(mid_channels, out_channels, kernel_size, padding),
     )
-
-
-# In[22]:
-
 
 def upsample(x1, x2):
 
@@ -270,10 +191,6 @@ def upsample(x1, x2):
         mode='trilinear',
         align_corners=True
     )
-
-
-# In[23]:
-
 
 class UNet(nn.Module):
     def __init__(self, n_channels, output_channels):
@@ -334,9 +251,6 @@ class UNet(nn.Module):
         return output
 
 
-# In[24]:
-
-
 if __name__ == '__main__':
 
     import numpy as np
@@ -348,37 +262,11 @@ if __name__ == '__main__':
 
     print (output.size())
 
-
-# In[ ]:
-
-
 import matplotlib.pyplot as plt
-
-
-# In[ ]:
-
-
-import sys
-sys.getrecursionlimit()
-
-
-# In[ ]:
-
-
-sys.setrecursionlimit(3000)
-
-
-# In[ ]:
-
 
 pt2np1 = output.detach().numpy()
 sqez1 = np.squeeze(pt2np1, axis=0)
 sqez2 = np.squeeze(sqez1,axis = 0)
 plt.imshow(sqez2[:,:,39], cmap='gray')
-
-
-# In[ ]:
-
-
 
 
